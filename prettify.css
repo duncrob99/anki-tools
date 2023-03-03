@@ -1,0 +1,26 @@
+body {
+  display: flex;
+  justify-content: center;
+}
+
+div#qa {
+  width: clamp(20rem, 80%, 50rem);
+  margin: 1rem;
+  padding: 1rem;
+  border: 1px solid #555;
+  border-radius: 0.5rem;
+  background-color: rgba(0, 0, 0, 0.2);
+}
+
+input#typeans {
+	--margin: 10px;
+	margin: var(--margin);
+	width: calc(100% - 2 * var(--margin));
+	padding: 10px;
+	border-radius: 10px;
+	border: 2px solid transparent;
+}
+
+input#typeans:focus {
+	border: 2px solid rgba(0.5, 0.5, 0.5, 0.5);
+}
