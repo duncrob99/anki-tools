@@ -42,12 +42,13 @@
 
   let default_input = document.querySelector('input#typeans');
   if (default_input) {
+    storage.setItem('typed_ans', default_input.value);
     default_input.addEventListener('input', function() {
       storage.setItem('typed_ans', default_input.value);
     });
   }
 
   window.getTypedAns = function() {
-    return storage.getItem('typed_ans');
+    return storage.getItem('typed_ans')??'';
   }
 })();
