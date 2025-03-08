@@ -107,11 +107,30 @@
   }
 
   function findxy(res, e) {
+    let canvasRect = canvas.getBoundingClientRect();
+    let touch_ev;
+    if (e.touches !== undefined) {
+      console.log("Touch event: ", e);
+      touch_ev = e;
+      console.log(e.touches.length);
+      if (e.touches.length > 1) return;
+      e = e.touches[0];
+      console.log("Single touch: ", e);
+      if (e === undefined) {
+        res = "out";
+      }
+    }
+    if (res !== "out" && (e.clientX < canvasRect.left || e.clientX > canvasRect.right || e.clientY < canvasRect.top || e.clientY > canvasRect.bottom)) {
+      res = "out";
+    } else if (touch_ev !== undefined && res !== "down") {
+      console.log("Preventing default");
+      touch_ev?.preventDefault();
+    }
     if (res == 'down') {
       prevX = currX;
       prevY = currY;
-      currX = e.clientX - canvas.offsetLeft;
-      currY = e.clientY - canvas.offsetTop;
+      currX = e.clientX - canvasRect.left;
+      currY = e.clientY - canvasRect.top;
 
       drawing_active = true;
       dot_flag = false;
@@ -132,11 +151,11 @@
       if (drawing_active) {
         prevX = currX;
         prevY = currY;
-        currX = e.clientX - canvas.offsetLeft;
-        currY = e.clientY - canvas.offsetTop;
+        currX = e.clientX - canvasRect.left;
+        currY = e.clientY - canvasRect.top;
         let dist = Math.sqrt((currX - prevX)**2 + (currY - prevY)**2)
 
-        if (movement_count < 5 && dist > 15) return;
+        if (movement_count < 2 && dist > 20 && touch_ev === undefined) return;
 
         draw();
       }
