@@ -1,13 +1,14 @@
 (function() {
-  let canvas, ctx, flag = false,
+  let canvas, ctx, drawing_active = false,
     prevX = 0,
     currX = 0,
     prevY = 0,
     currY = 0,
-    dot_flag = false;
+    dot_flag = false,
+    movement_count = 0;
 
-  var x = "black",
-    y = 5;
+  let colour = "black",
+    line_width = 5;
 
   function init() {
     canvas = document.querySelector('canvas');
@@ -49,29 +50,29 @@
   function color(obj) {
     switch (obj.id) {
       case "green":
-        x = "green";
+        colour = "green";
         break;
       case "blue":
-        x = "blue";
+        colour = "blue";
         break;
       case "red":
-        x = "red";
+        colour = "red";
         break;
       case "yellow":
-        x = "yellow";
+        colour = "yellow";
         break;
       case "orange":
-        x = "orange";
+        colour = "orange";
         break;
       case "black":
-        x = "black";
+        colour = "black";
         break;
       case "white":
-        x = "white";
+        colour = "white";
         break;
     }
-    if (x == "white") y = 14;
-    else y = 5;
+    if (x == "white") line_width = 14;
+    else line_width = 5;
 
   }
 
@@ -79,8 +80,8 @@
     ctx.beginPath();
     ctx.moveTo(prevX, prevY);
     ctx.lineTo(currX, currY);
-    ctx.strokeStyle = x;
-    ctx.lineWidth = y;
+    ctx.strokeStyle = colour;
+    ctx.lineWidth = line_width;
     ctx.stroke();
     ctx.closePath();
     save();
@@ -90,7 +91,7 @@
     //var m = confirm("Want to clear");
     if (true) {
       ctx.clearRect(0, 0, w, h);
-      document.getElementById("canvasimg").style.display = "none";
+      //document.getElementById("canvasimg").style.display = "none";
     }
     save();
   }
@@ -112,27 +113,34 @@
       currX = e.clientX - canvas.offsetLeft;
       currY = e.clientY - canvas.offsetTop;
 
-      flag = true;
-      dot_flag = true;
+      drawing_active = true;
+      dot_flag = false;
       if (dot_flag) {
         ctx.beginPath();
-        ctx.fillStyle = x;
+        ctx.fillStyle = colour;
         ctx.fillRect(currX, currY, 2, 2);
         ctx.closePath();
         dot_flag = false;
       }
+      movement_count = 0;
     }
     if (res == 'up' || res == "out") {
-      flag = false;
+      drawing_active = false;
+      movement_count = 0;
     }
     if (res == 'move') {
-      if (flag) {
+      if (drawing_active) {
         prevX = currX;
         prevY = currY;
         currX = e.clientX - canvas.offsetLeft;
         currY = e.clientY - canvas.offsetTop;
+        let dist = Math.sqrt((currX - prevX)**2 + (currY - prevY)**2)
+
+        if (movement_count < 5 && dist > 15) return;
+
         draw();
       }
+      movement_count += 1;
     }
   }
 
