@@ -1,17 +1,20 @@
-(function() {
+window.initialiseCanvas = function(query) {
   let canvas, ctx, drawing_active = false,
     prevX = 0,
     currX = 0,
     prevY = 0,
     currY = 0,
     dot_flag = false,
-    movement_count = 0;
+    movement_count = 0
+    strokes = [];
+
+  query = query ?? "canvas";
 
   let colour = "black",
-    line_width = 5;
+    line_width = 7;
 
   function init() {
-    canvas = document.querySelector('canvas');
+    canvas = document.querySelector(query);
     ctx = canvas.getContext("2d");
     w = canvas.width;
     h = canvas.height; 
@@ -47,6 +50,15 @@
     console.log("init complete",canvas);
   }
 
+  function checkCanvasExists() {
+    if (!canvas) {
+      console.log("Didn't find canvas, going to try reinitialising...");
+      init();
+    }
+  }
+
+  setInterval(checkCanvasExists, 500);
+
   function color(obj) {
     switch (obj.id) {
       case "green":
@@ -77,6 +89,7 @@
   }
 
   function draw() {
+    /*
     ctx.beginPath();
     ctx.moveTo(prevX, prevY);
     ctx.lineTo(currX, currY);
@@ -84,6 +97,19 @@
     ctx.lineWidth = line_width;
     ctx.stroke();
     ctx.closePath();
+    save();
+    */
+    ctx.beginPath();
+    let last_stroke = strokes[strokes.length - 1]
+    let initial_point = last_stroke[0];
+    ctx.strokeStyle = colour;
+    ctx.lineWidth = line_width;
+    ctx.moveTo(initial_point.x, initial_point.y);
+    for (point of last_stroke) {
+      ctx.lineTo(point.x, point.y);
+      ctx.stroke();
+      point.done = true;
+    }
     save();
   }
 
@@ -142,6 +168,8 @@
         dot_flag = false;
       }
       movement_count = 0;
+
+      strokes.push([]);
     }
     if (res == 'up' || res == "out") {
       drawing_active = false;
@@ -149,6 +177,7 @@
     }
     if (res == 'move') {
       if (drawing_active) {
+        strokes[strokes.length - 1]?.push({x: e.clientX - canvasRect.left, y: e.clientY - canvasRect.top});
         prevX = currX;
         prevY = currY;
         currX = e.clientX - canvasRect.left;
@@ -164,4 +193,4 @@
   }
 
   setTimeout(init, 50);
-})();
+}
