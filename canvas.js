@@ -11,7 +11,7 @@ window.initialiseCanvas = function(query) {
   query = query ?? "canvas";
 
   let colour = "black",
-    line_width = 7;
+    line_width = 15;
 
   function init() {
     canvas = document.querySelector(query);
@@ -45,7 +45,8 @@ window.initialiseCanvas = function(query) {
       findxy('out', e)
     }, false);
 
-    document.querySelector(".clear-button").addEventListener("click", erase);
+    document.querySelector(".clear-button").addEventListener("click", clear);
+    document.querySelector(".undo-button").addEventListener("click", undo);
     save();
     console.log("init complete",canvas);
   }
@@ -88,7 +89,7 @@ window.initialiseCanvas = function(query) {
 
   }
 
-  function draw() {
+  function draw(stroke) {
     /*
     ctx.beginPath();
     ctx.moveTo(prevX, prevY);
@@ -100,17 +101,43 @@ window.initialiseCanvas = function(query) {
     save();
     */
     ctx.beginPath();
-    let last_stroke = strokes[strokes.length - 1]
-    let initial_point = last_stroke[0];
+    stroke = stroke ?? strokes[strokes.length - 1]
+    let initial_point = stroke[0];
     ctx.strokeStyle = colour;
     ctx.lineWidth = line_width;
     ctx.moveTo(initial_point.x, initial_point.y);
-    for (point of last_stroke) {
+    for (point of stroke) {
       ctx.lineTo(point.x, point.y);
       ctx.stroke();
-      point.done = true;
     }
     save();
+  }
+
+  function smooth_stroke(stroke, depth) {
+    depth = depth ?? 1;
+    if (depth === 0) return stroke;
+
+    let new_stroke = [stroke[0]];
+    for (let [ix, point] of Array.from(stroke.entries()).slice(1)) {
+      let prev_point = stroke[ix-1];
+      new_stroke.push({
+        x: prev_point.x * 2 / 3 + point.x / 3,
+        y: prev_point.y * 2 / 3 + point.y / 3,
+      });
+      new_stroke.push({
+        x: prev_point.x / 3 + point.x * 2 / 3,
+        y: prev_point.y / 3 + point.y * 2 / 3,
+      });
+    }
+    new_stroke.push(stroke[stroke.length - 1]);
+    return smooth_stroke(new_stroke, depth - 1);
+  }
+
+  function smooth_draw() {
+    erase();
+    let last_stroke = strokes[strokes.length - 1]
+    strokes[strokes.length - 1] = smooth_stroke(last_stroke, 2);
+    strokes.forEach(draw);
   }
 
   function erase() {
@@ -120,6 +147,17 @@ window.initialiseCanvas = function(query) {
       //document.getElementById("canvasimg").style.display = "none";
     }
     save();
+  }
+
+  function undo() {
+    erase();
+    strokes.pop();
+    smooth_draw();
+  }
+
+  function clear() {
+    erase();
+    strokes = [];
   }
 
   function save() {
@@ -174,10 +212,16 @@ window.initialiseCanvas = function(query) {
     if (res == 'up' || res == "out") {
       drawing_active = false;
       movement_count = 0;
+      smooth_draw();
     }
     if (res == 'move') {
       if (drawing_active) {
-        strokes[strokes.length - 1]?.push({x: e.clientX - canvasRect.left, y: e.clientY - canvasRect.top});
+        strokes[strokes.length - 1]?.push(
+          {
+            x: (e.clientX - canvasRect.left) * canvas.width / canvasRect.width,
+            y: (e.clientY - canvasRect.top) * canvas.height / canvasRect.height
+          }
+        );
         prevX = currX;
         prevY = currY;
         currX = e.clientX - canvasRect.left;
